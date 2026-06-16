@@ -1,0 +1,20 @@
+# secrets — never commit a real .env
+.env
+.env.local
+
+# deps & build
+node_modules/
+dist/
+
+# Evalite SQLite run-history DB (regenerated locally; not committed)
+*.db
+*.db-shm
+*.db-wal
+.evalite/
+
+# Langfuse self-host clone (if you `git clone` it here instead of using ./langfuse)
+/langfuse-src/
+
+# OS / editor
+.DS_Store
+*.log
