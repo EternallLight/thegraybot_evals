@@ -20,8 +20,6 @@ const sdk = new NodeSDK({
 
 sdk.start();
 
-export { sdk };
-
 /**
  * Spans are batched. In a short-lived CLI script they'd be lost on exit, so callers
  * MUST flush before the process ends: `await flushTelemetry()`.

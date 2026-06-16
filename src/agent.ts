@@ -29,7 +29,7 @@ export interface ReplyOpts {
   weakened?: boolean;
 }
 
-function buildSystemPrompt({ audience = "team", weakened = false }: ReplyOpts): string {
+function buildSystemPrompt(audience: Audience, weakened: boolean): string {
   if (weakened) return WEAKENED_SYSTEM_PROMPT;
   if (audience === "outsider") return OUTSIDER_SYSTEM_PROMPT;
   return `${TEAM_SYSTEM_PROMPT}\n\n${HELPFULNESS_NUDGE}`;
@@ -42,7 +42,7 @@ export async function reply(message: string, opts: ReplyOpts = {}): Promise<stri
 
   const { text } = await generateText({
     model: moonshot(model),
-    system: buildSystemPrompt({ audience, weakened }),
+    system: buildSystemPrompt(audience, weakened),
     prompt: message,
     maxOutputTokens: 400,
     temperature: 0.7,
