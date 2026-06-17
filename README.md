@@ -70,10 +70,11 @@ src/
   model.ts            ← Moonshot Kimi provider + mock flag
   agent.ts            ← reply()  — THE AGENT UNDER TEST (shared by both tools)
   scorers.ts          ← deterministic + LLM-as-judge scorers (shared by both tools)
-  reply.eval.ts       ← Act 1: the Evalite eval
   instrumentation.ts  ← Act 2: Langfuse OpenTelemetry span processor
   seed-langfuse.ts    ← Act 2: dataset experiment, multiple runs, scores
   try-agent.ts        ← quick "run the agent, see a trace" helper
+evals/
+  reply.eval.ts       ← Act 1: the Evalite eval (imports the shared src/ files)
 langfuse/
   docker-compose.yml  ← official Langfuse stack (demo creds pre-filled)
 ```

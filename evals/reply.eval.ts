@@ -13,9 +13,9 @@
  * outsider-only). The conditioning lives in `scorers.ts` via `appliesTo`.
  */
 import { evalite, createScorer } from "evalite";
-import { cases, type Audience } from "./cases";
-import { reply } from "./agent";
-import { SCORERS, applies, type Scorer } from "./scorers";
+import { cases, type Audience } from "../src/cases";
+import { reply } from "../src/agent";
+import { SCORERS, applies, type Scorer } from "../src/scorers";
 
 interface EvalInput {
   message: string;

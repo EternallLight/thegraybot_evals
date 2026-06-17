@@ -1,7 +1,7 @@
 /**
  * The SINGLE SOURCE OF TRUTH for the demo.
  *
- * Both Act 1 (Evalite, `src/reply.eval.ts`) and Act 2 (Langfuse, `src/seed-langfuse.ts`)
+ * Both Act 1 (Evalite, `evals/reply.eval.ts`) and Act 2 (Langfuse, `src/seed-langfuse.ts`)
  * import THIS array. That's the whole point: the two observability tools score the
  * exact same agent against the exact same inputs, so any difference you see in the
  * UIs comes from the tools — not from drifting test data.
