@@ -145,14 +145,15 @@ async function runJudge(instruction: string, input: ScoreInput): Promise<ScoreRe
       model: moonshot(JUDGE_MODEL),
       schema: JudgeSchema,
       prompt,
-      temperature: 0,
+      // Kimi K2.5 only accepts temperature 1; we'd prefer 0 for deterministic grading.
+      temperature: 1,
     });
     return { score: clamp01(object.score), metadata: { reasoning: object.reasoning } };
   } catch {
     const { text } = await generateText({
       model: moonshot(JUDGE_MODEL),
       prompt: `${prompt}\n\nRespond with ONLY a JSON object: {"score": <0-1>, "reasoning": "<text>"}.`,
-      temperature: 0,
+      temperature: 1,
     });
     const parsed = parseJudgeText(text);
     return { score: clamp01(parsed.score), metadata: { reasoning: parsed.reasoning, viaTextFallback: true } };

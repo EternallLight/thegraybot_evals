@@ -36,10 +36,10 @@ export const moonshot = createOpenAICompatible({
 });
 
 /** Capable default for the agent. */
-export const DEFAULT_MODEL = process.env.MOONSHOT_MODEL ?? "kimi-k2-0905-preview";
+export const DEFAULT_MODEL = process.env.MOONSHOT_MODEL ?? "kimi-k2.5";
 /** Cheaper/older model — used in ONE seeding run to make a "different model" comparison visible. */
 export const ALT_MODEL = process.env.MOONSHOT_ALT_MODEL ?? "moonshot-v1-8k";
 /** Fixed, capable model for the judges, so scores stay stable as the AGENT varies. */
-export const JUDGE_MODEL = process.env.MOONSHOT_JUDGE_MODEL ?? "kimi-k2-0905-preview";
+export const JUDGE_MODEL = process.env.MOONSHOT_JUDGE_MODEL ?? "kimi-k2.5";
 
 export const clamp01 = (n: number): number => Math.max(0, Math.min(1, n));
