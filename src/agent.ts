@@ -45,7 +45,7 @@ export async function reply(message: string, opts: ReplyOpts = {}): Promise<stri
     system: buildSystemPrompt(audience, weakened),
     prompt: message,
     maxOutputTokens: 400,
-    temperature: 0.7,
+    temperature: 1,
     experimental_telemetry: {
       isEnabled: true,
       functionId: "graycat-reply",
