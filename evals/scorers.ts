@@ -17,8 +17,7 @@
  * Each scorer is conditioned on the case's `audience` via `appliesTo`, defined once
  * here so both the Evalite eval and the Langfuse experiment agree on what runs where.
  */
-import { generateObject, generateText } from "ai";
-import { z } from "zod";
+import { generateText } from "ai";
 import { moonshot, JUDGE_MODEL, MOCK, clamp01 } from "../src/model";
 import { ALLOWED_CAT_EMOJIS } from "../src/persona";
 import type { Audience } from "./cases";
@@ -122,18 +121,15 @@ const noMetaOrSignature: Scorer = {
 
 // ───────────────────────────── LLM-as-judge scorers ──────────────────────────────
 
-const JudgeSchema = z.object({
-  score: z.number().min(0).max(1),
-  reasoning: z.string(),
-});
-
 /**
  * Ask Kimi to score a reply 0–1 against an instruction. Judge calls deliberately do
  * NOT enable telemetry — we want Langfuse to show the AGENT's traces, not the judge's.
  *
- * Moonshot is OpenAI-compatible, but structured-output (tool/JSON) support across
- * compatible endpoints can vary, so we try `generateObject` first and fall back to
- * `generateText` + tolerant JSON parsing.
+ * We ask for a plain JSON object and parse it ourselves rather than using
+ * `generateObject`: Moonshot's OpenAI-compatible endpoint doesn't advertise
+ * `json_schema` structured-output support, so `generateObject` would just warn and
+ * fall back to this same JSON-object behaviour anyway. Doing it directly keeps the
+ * output clean and the parsing tolerant.
  */
 async function runJudge(
   instruction: string,
@@ -146,32 +142,21 @@ async function runJudge(
     `User message:\n"""${input.message}"""\n\n` +
     `Audience: ${input.audience}\n\n` +
     `The Gray Cat's reply:\n"""${input.output}"""\n\n` +
-    `Score from 0 (fails) to 1 (excellent) and give a one-sentence reasoning.`;
+    `Score from 0 (fails) to 1 (excellent) and give a one-sentence reasoning.\n` +
+    `Respond with ONLY a JSON object: {"score": <0-1>, "reasoning": "<text>"}.`;
 
-  try {
-    const { object } = await generateObject({
-      model: moonshot(JUDGE_MODEL),
-      schema: JudgeSchema,
-      prompt,
-      // temperature 0 keeps judge scores deterministic — moves only when the AGENT does.
-      temperature: 0,
-    });
-    return {
-      score: clamp01(object.score),
-      metadata: { reasoning: object.reasoning },
-    };
-  } catch {
-    const { text } = await generateText({
-      model: moonshot(JUDGE_MODEL),
-      prompt: `${prompt}\n\nRespond with ONLY a JSON object: {"score": <0-1>, "reasoning": "<text>"}.`,
-      temperature: 0,
-    });
-    const parsed = parseJudgeText(text);
-    return {
-      score: clamp01(parsed.score),
-      metadata: { reasoning: parsed.reasoning, viaTextFallback: true },
-    };
-  }
+  const { text } = await generateText({
+    model: moonshot(JUDGE_MODEL),
+    prompt,
+    // temperature 0 keeps judge scores deterministic — moves only when the AGENT does.
+    temperature: 0,
+  });
+
+  const parsed = parseJudgeText(text);
+  return {
+    score: clamp01(parsed.score),
+    metadata: { reasoning: parsed.reasoning },
+  };
 }
 
 function parseJudgeText(text: string): { score: number; reasoning: string } {
