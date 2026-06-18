@@ -98,7 +98,11 @@ services:
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-graycatdemo}
 
   clickhouse:
-    image: docker.io/clickhouse/clickhouse-server
+    # Pinned to a 24.x LTS on purpose. Langfuse v3's ClickHouse queries break on the
+    # "new analyzer" that recent ClickHouse releases enable by default — an unpinned
+    # `clickhouse/clickhouse-server` silently pulled 26.x and the Scores tab 500'd
+    # ("Not found column …" on scores.all). 24.3 predates that default. Don't un-pin.
+    image: docker.io/clickhouse/clickhouse-server:24.3
     restart: always
     user: "101:101"
     environment:
