@@ -10,7 +10,7 @@
  */
 import "./instrumentation";
 import { flushTelemetry } from "./instrumentation";
-import { reply } from "./agent";
+import { reply } from "../src/agent";
 import { cases } from "./cases";
 
 async function main(): Promise<void> {

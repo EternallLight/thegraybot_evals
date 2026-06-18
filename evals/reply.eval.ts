@@ -13,9 +13,9 @@
  * outsider-only). The conditioning lives in `scorers.ts` via `appliesTo`.
  */
 import { evalite, createScorer } from "evalite";
-import { cases, type Audience } from "../src/cases";
+import { cases, type Audience } from "./cases";
 import { reply } from "../src/agent";
-import { SCORERS, applies, type Scorer } from "../src/scorers";
+import { SCORERS, applies, type Scorer } from "./scorers";
 
 interface EvalInput {
   message: string;
@@ -29,7 +29,11 @@ function toEvaliteScorer(s: Scorer) {
     name: s.name,
     description: s.description,
     scorer: async ({ input, output }) => {
-      const r = await s.run({ message: input.message, audience: input.audience, output });
+      const r = await s.run({
+        message: input.message,
+        audience: input.audience,
+        output,
+      });
       return { score: r.score, metadata: r.metadata };
     },
   });
@@ -39,13 +43,16 @@ function dataFor(audience: Audience) {
   return async () =>
     cases
       .filter((c) => c.audience === audience)
-      .map((c) => ({ input: { message: c.input, audience: c.audience, notes: c.notes } }));
+      .map((c) => ({
+        input: { message: c.input, audience: c.audience, notes: c.notes },
+      }));
 }
 
 const scorersFor = (audience: Audience) =>
   SCORERS.filter((s) => applies(s, audience)).map(toEvaliteScorer);
 
-const task = async (input: EvalInput) => reply(input.message, { audience: input.audience });
+const task = async (input: EvalInput) =>
+  reply(input.message, { audience: input.audience });
 
 evalite<EvalInput, string>("Gray Cat — team (full persona)", {
   data: dataFor("team"),

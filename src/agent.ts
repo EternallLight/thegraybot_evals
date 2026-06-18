@@ -11,7 +11,7 @@
  */
 import { generateText } from "ai";
 import { moonshot, DEFAULT_MODEL, MOCK } from "./model";
-import type { Audience } from "./cases";
+import type { Audience } from "../evals/cases";
 import {
   TEAM_SYSTEM_PROMPT,
   OUTSIDER_SYSTEM_PROMPT,
@@ -35,7 +35,10 @@ function buildSystemPrompt(audience: Audience, weakened: boolean): string {
   return `${TEAM_SYSTEM_PROMPT}\n\n${HELPFULNESS_NUDGE}`;
 }
 
-export async function reply(message: string, opts: ReplyOpts = {}): Promise<string> {
+export async function reply(
+  message: string,
+  opts: ReplyOpts = {},
+): Promise<string> {
   const { audience = "team", model = DEFAULT_MODEL, weakened = false } = opts;
 
   if (MOCK) return mockReply(message, audience, weakened);
@@ -67,7 +70,11 @@ export async function reply(message: string, opts: ReplyOpts = {}): Promise<stri
  * checks; the weakened variant drops them (so `inCharacter` falls); outsider replies
  * are professional with no emoji. No LLM call, no token spend.
  */
-function mockReply(message: string, audience: Audience, weakened: boolean): string {
+function mockReply(
+  message: string,
+  audience: Audience,
+  weakened: boolean,
+): string {
   if (audience === "outsider") {
     if (/rate.?limit|reset|quota/i.test(message)) {
       return "Thanks for reaching out. Our API rate limits reset at the start of each minute; you can check the `X-RateLimit-Remaining` response header to monitor your remaining quota.";
@@ -96,7 +103,9 @@ function catAnswer(message: string): string {
   if (/python|reverse|list/i.test(message)) {
     return "Pounce on `list[::-1]` for a reversed copy, or `list.reverse()` to flip it in _paws_-itively in place.";
   }
-  if (/tip|%|\$/.test(message)) return "That's a cool $6 — no need to *paws* and do mental meowth.";
-  if (/nap|tired/i.test(message)) return "As the resident expert: 16 hours a day, sunbeam mandatory.";
+  if (/tip|%|\$/.test(message))
+    return "That's a cool $6 — no need to *paws* and do mental meowth.";
+  if (/nap|tired/i.test(message))
+    return "As the resident expert: 16 hours a day, sunbeam mandatory.";
   return "Here's the gist, served with a side of whiskers.";
 }

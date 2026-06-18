@@ -19,8 +19,8 @@
  */
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
-import { moonshot, JUDGE_MODEL, MOCK, clamp01 } from "./model";
-import { ALLOWED_CAT_EMOJIS } from "./persona";
+import { moonshot, JUDGE_MODEL, MOCK, clamp01 } from "../src/model";
+import { ALLOWED_CAT_EMOJIS } from "../src/persona";
 import type { Audience } from "./cases";
 
 export interface ScoreInput {
@@ -88,13 +88,17 @@ const concise: Scorer = {
   appliesTo: "all",
   run: async ({ output }) => {
     const length = output.length;
-    return { score: length <= MAX_CONCISE_CHARS ? 1 : 0, metadata: { length, max: MAX_CONCISE_CHARS } };
+    return {
+      score: length <= MAX_CONCISE_CHARS ? 1 : 0,
+      metadata: { length, max: MAX_CONCISE_CHARS },
+    };
   },
 };
 
 const noMarkdownHeaders: Scorer = {
   name: "noMarkdownHeaders",
-  description: 'No leading Markdown "#" header lines (Slack renders them literally).',
+  description:
+    'No leading Markdown "#" header lines (Slack renders them literally).',
   kind: "deterministic",
   appliesTo: "all",
   run: async ({ output }) => {
@@ -105,7 +109,8 @@ const noMarkdownHeaders: Scorer = {
 
 const noMetaOrSignature: Scorer = {
   name: "noMetaOrSignature",
-  description: "No forbidden meta-text or sign-offs (e.g. \"as an AI\", \"I hope this helps\").",
+  description:
+    'No forbidden meta-text or sign-offs (e.g. "as an AI", "I hope this helps").',
   kind: "deterministic",
   appliesTo: "all",
   run: async ({ output }) => {
@@ -130,7 +135,10 @@ const JudgeSchema = z.object({
  * compatible endpoints can vary, so we try `generateObject` first and fall back to
  * `generateText` + tolerant JSON parsing.
  */
-async function runJudge(instruction: string, input: ScoreInput): Promise<ScoreResult> {
+async function runJudge(
+  instruction: string,
+  input: ScoreInput,
+): Promise<ScoreResult> {
   if (MOCK) return mockJudge(instruction, input);
 
   const prompt =
@@ -145,18 +153,24 @@ async function runJudge(instruction: string, input: ScoreInput): Promise<ScoreRe
       model: moonshot(JUDGE_MODEL),
       schema: JudgeSchema,
       prompt,
-      // Kimi K2.5 only accepts temperature 1; we'd prefer 0 for deterministic grading.
-      temperature: 1,
+      // temperature 0 keeps judge scores deterministic — moves only when the AGENT does.
+      temperature: 0,
     });
-    return { score: clamp01(object.score), metadata: { reasoning: object.reasoning } };
+    return {
+      score: clamp01(object.score),
+      metadata: { reasoning: object.reasoning },
+    };
   } catch {
     const { text } = await generateText({
       model: moonshot(JUDGE_MODEL),
       prompt: `${prompt}\n\nRespond with ONLY a JSON object: {"score": <0-1>, "reasoning": "<text>"}.`,
-      temperature: 1,
+      temperature: 0,
     });
     const parsed = parseJudgeText(text);
-    return { score: clamp01(parsed.score), metadata: { reasoning: parsed.reasoning, viaTextFallback: true } };
+    return {
+      score: clamp01(parsed.score),
+      metadata: { reasoning: parsed.reasoning, viaTextFallback: true },
+    };
   }
 }
 
@@ -164,8 +178,12 @@ function parseJudgeText(text: string): { score: number; reasoning: string } {
   const match = text.match(/\{[\s\S]*\}/);
   if (match) {
     try {
-      const obj = JSON.parse(match[0]) as { score?: number; reasoning?: string };
-      if (typeof obj.score === "number") return { score: obj.score, reasoning: obj.reasoning ?? "" };
+      const obj = JSON.parse(match[0]) as {
+        score?: number;
+        reasoning?: string;
+      };
+      if (typeof obj.score === "number")
+        return { score: obj.score, reasoning: obj.reasoning ?? "" };
     } catch {
       /* fall through */
     }
@@ -190,7 +208,8 @@ const inCharacter: Scorer = {
 
 const helpful: Scorer = {
   name: "helpful",
-  description: "LLM judge: did the reply actually address and help with the user's message?",
+  description:
+    "LLM judge: did the reply actually address and help with the user's message?",
   kind: "judge",
   appliesTo: "all",
   run: (input) =>
@@ -217,17 +236,25 @@ const professionalModeRespected: Scorer = {
 function mockJudge(instruction: string, { output }: ScoreInput): ScoreResult {
   const lower = output.toLowerCase();
   const hasEmoji = ALLOWED_CAT_EMOJIS.some((e) => output.includes(e));
-  const hasPun = /(purr|meow|fur real|claw|paws|whisker|gray cat|sunbeam)/.test(lower);
+  const hasPun = /(purr|meow|fur real|claw|paws|whisker|gray cat|sunbeam)/.test(
+    lower,
+  );
   const answered = output.trim().length > 15;
 
   if (instruction.includes("EXTERNAL, professional")) {
-    return { score: !hasEmoji && !hasPun ? 0.92 : 0.3, metadata: { reasoning: "mock heuristic", mock: true } };
+    return {
+      score: !hasEmoji && !hasPun ? 0.92 : 0.3,
+      metadata: { reasoning: "mock heuristic", mock: true },
+    };
   }
   if (instruction.includes("Gray Cat persona")) {
     const score = hasPun && hasEmoji ? 0.95 : hasPun || hasEmoji ? 0.6 : 0.15;
     return { score, metadata: { reasoning: "mock heuristic", mock: true } };
   }
-  return { score: answered ? 0.85 : 0.2, metadata: { reasoning: "mock heuristic", mock: true } };
+  return {
+    score: answered ? 0.85 : 0.2,
+    metadata: { reasoning: "mock heuristic", mock: true },
+  };
 }
 
 // ───────────────────────────── registry ──────────────────────────────────────────

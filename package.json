@@ -8,8 +8,8 @@
     "eval": "evalite watch",
     "eval:watch": "evalite watch",
     "eval:ci": "evalite",
-    "try": "tsx src/try-agent.ts",
-    "seed:langfuse": "tsx src/seed-langfuse.ts",
+    "try": "tsx evals/try-agent.ts",
+    "seed:langfuse": "tsx evals/seed-langfuse.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

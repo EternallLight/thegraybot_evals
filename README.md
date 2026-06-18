@@ -64,23 +64,23 @@ Or run everything **free** with no API key in **mock mode** (see below).
 ## Repo layout
 
 ```
-src/
-  cases.ts            ← the ~9 shared cases (single source of truth)
+src/                  ← the agent under test
   persona.ts          ← Gray Cat system prompts + allowed emoji set
   model.ts            ← Moonshot Kimi provider + mock flag
   agent.ts            ← reply()  — THE AGENT UNDER TEST (shared by both tools)
+evals/                ← everything that measures / observes the agent
+  cases.ts            ← the ~9 shared cases (single source of truth)
   scorers.ts          ← deterministic + LLM-as-judge scorers (shared by both tools)
+  reply.eval.ts       ← Act 1: the Evalite eval
   instrumentation.ts  ← Act 2: Langfuse OpenTelemetry span processor
   seed-langfuse.ts    ← Act 2: dataset experiment, multiple runs, scores
   try-agent.ts        ← quick "run the agent, see a trace" helper
-evals/
-  reply.eval.ts       ← Act 1: the Evalite eval (imports the shared src/ files)
 langfuse/
   docker-compose.yml  ← official Langfuse stack (demo creds pre-filled)
 ```
 
-The agent (`agent.ts`), the cases (`cases.ts`), and the scorers (`scorers.ts`) are **shared**.
-Evalite and Langfuse are just two lenses on the same three files.
+The agent (`src/agent.ts`), the cases (`evals/cases.ts`), and the scorers (`evals/scorers.ts`)
+are **shared**. Evalite and Langfuse are just two lenses on the same three files.
 
 ---
 
@@ -224,7 +224,7 @@ Nothing else changes. (Self-host is the primary path — the narrative is "data 
 The deterministic scorers are cheap and objective. The **judge** scorers exist precisely
 because you can't write `/charming/` — "in character" is a judgement call, so we ask another
 LLM. They're the fuzzy, occasionally-wrong scores that observability is built to watch. The
-conditioning (which scorer runs on team vs outsider) is defined once in `src/scorers.ts`.
+conditioning (which scorer runs on team vs outsider) is defined once in `evals/scorers.ts`.
 
 ---
 

@@ -20,9 +20,9 @@ import "./instrumentation";
 import { flushTelemetry } from "./instrumentation";
 import { LangfuseClient } from "@langfuse/client";
 import { cases, type Audience } from "./cases";
-import { reply } from "./agent";
+import { reply } from "../src/agent";
 import { SCORERS, applies } from "./scorers";
-import { DEFAULT_MODEL, ALT_MODEL, MOCK } from "./model";
+import { DEFAULT_MODEL, ALT_MODEL, MOCK } from "../src/model";
 
 const DATASET = "graycat-cases";
 const RUNS = Number(process.env.RUNS ?? 5);
@@ -42,7 +42,8 @@ interface RunConfig {
 
 /** index 1 = different model; last run = weakened persona (the visible trend dip). */
 function runConfig(i: number, total: number): RunConfig {
-  if (i === total - 1) return { label: "weakened-persona", model: DEFAULT_MODEL, weakened: true };
+  if (i === total - 1)
+    return { label: "weakened-persona", model: DEFAULT_MODEL, weakened: true };
   if (i === 1) return { label: "alt-model", model: ALT_MODEL, weakened: false };
   return { label: "baseline", model: DEFAULT_MODEL, weakened: false };
 }
@@ -50,12 +51,19 @@ function runConfig(i: number, total: number): RunConfig {
 async function ensureDataset(langfuse: LangfuseClient): Promise<void> {
   // Idempotent: creating an existing dataset/item just no-ops or upserts by id.
   try {
-    await langfuse.api.datasets.create({ name: DATASET, description: "Gray Cat persona eval cases (shared with Evalite)." });
+    await langfuse.api.datasets.create({
+      name: DATASET,
+      description: "Gray Cat persona eval cases (shared with Evalite).",
+    });
   } catch {
     /* already exists */
   }
   for (const [idx, c] of cases.entries()) {
-    const input: DatasetItemInput = { message: c.input, audience: c.audience, notes: c.notes };
+    const input: DatasetItemInput = {
+      message: c.input,
+      audience: c.audience,
+      notes: c.notes,
+    };
     try {
       await langfuse.api.datasetItems.create({
         datasetName: DATASET,
@@ -80,14 +88,27 @@ function buildEvaluators() {
     const input = params.input as DatasetItemInput;
     const output = String(params.output ?? "");
     if (!applies(s, input.audience)) return [];
-    const r = await s.run({ message: input.message, audience: input.audience, output });
-    const reasoning = typeof r.metadata?.reasoning === "string" ? r.metadata.reasoning : undefined;
-    return { name: s.name, value: r.score, comment: reasoning ?? JSON.stringify(r.metadata ?? {}) };
+    const r = await s.run({
+      message: input.message,
+      audience: input.audience,
+      output,
+    });
+    const reasoning =
+      typeof r.metadata?.reasoning === "string"
+        ? r.metadata.reasoning
+        : undefined;
+    return {
+      name: s.name,
+      value: r.score,
+      comment: reasoning ?? JSON.stringify(r.metadata ?? {}),
+    };
   });
 }
 
 async function main(): Promise<void> {
-  console.log(`Seeding Langfuse dataset "${DATASET}" with ${RUNS} run(s)${MOCK ? " [MOCK mode]" : ""}…`);
+  console.log(
+    `Seeding Langfuse dataset "${DATASET}" with ${RUNS} run(s)${MOCK ? " [MOCK mode]" : ""}…`,
+  );
 
   const langfuse = new LangfuseClient();
   await ensureDataset(langfuse);
@@ -98,14 +119,20 @@ async function main(): Promise<void> {
   for (let i = 0; i < RUNS; i++) {
     const cfg = runConfig(i, RUNS);
     const runName = `${cfg.label}-r${i + 1}-${STAMP}`;
-    console.log(`\n▶ run ${i + 1}/${RUNS}: ${runName}  (model=${cfg.model}, persona=${cfg.weakened ? "weakened" : "full"})`);
+    console.log(
+      `\n▶ run ${i + 1}/${RUNS}: ${runName}  (model=${cfg.model}, persona=${cfg.weakened ? "weakened" : "full"})`,
+    );
 
     const result = await dataset.runExperiment({
       name: runName,
       description: `model=${cfg.model} persona=${cfg.weakened ? "weakened" : "full"}`,
       task: async (params: any) => {
         const input = params.input as DatasetItemInput;
-        return reply(input.message, { audience: input.audience, model: cfg.model, weakened: cfg.weakened });
+        return reply(input.message, {
+          audience: input.audience,
+          model: cfg.model,
+          weakened: cfg.weakened,
+        });
       },
       evaluators,
     });
@@ -124,7 +151,9 @@ async function main(): Promise<void> {
     /* some SDK builds flush implicitly */
   }
   await flushTelemetry();
-  console.log("\n✅ Done. Open Langfuse → Datasets → graycat-cases → Runs to see scores and the trend.");
+  console.log(
+    "\n✅ Done. Open Langfuse → Datasets → graycat-cases → Runs to see scores and the trend.",
+  );
 }
 
 main().catch(async (err) => {
