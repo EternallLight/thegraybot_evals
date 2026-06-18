@@ -18,7 +18,7 @@
  * here so both the Evalite eval and the Langfuse experiment agree on what runs where.
  */
 import { generateText } from "ai";
-import { moonshot, JUDGE_MODEL, MOCK, clamp01 } from "../src/model";
+import { grok, JUDGE_MODEL, MOCK, clamp01 } from "../src/model";
 import { ALLOWED_CAT_EMOJIS } from "../src/persona";
 import type { Audience } from "./cases";
 
@@ -122,14 +122,14 @@ const noMetaOrSignature: Scorer = {
 // ───────────────────────────── LLM-as-judge scorers ──────────────────────────────
 
 /**
- * Ask Kimi to score a reply 0–1 against an instruction. Judge calls deliberately do
- * NOT enable telemetry — we want Langfuse to show the AGENT's traces, not the judge's.
+ * Ask the judge model to score a reply 0–1 against an instruction. Judge calls
+ * deliberately do NOT enable telemetry — we want Langfuse to show the AGENT's
+ * traces, not the judge's.
  *
  * We ask for a plain JSON object and parse it ourselves rather than using
- * `generateObject`: Moonshot's OpenAI-compatible endpoint doesn't advertise
- * `json_schema` structured-output support, so `generateObject` would just warn and
- * fall back to this same JSON-object behaviour anyway. Doing it directly keeps the
- * output clean and the parsing tolerant.
+ * `generateObject`. Going through the OpenAI-compatible provider, this keeps the
+ * judge provider-agnostic and the parsing tolerant of minor formatting drift —
+ * no dependency on a model advertising `json_schema` structured-output support.
  */
 async function runJudge(
   instruction: string,
@@ -146,7 +146,7 @@ async function runJudge(
     `Respond with ONLY a JSON object: {"score": <0-1>, "reasoning": "<text>"}.`;
 
   const { text } = await generateText({
-    model: moonshot(JUDGE_MODEL),
+    model: grok(JUDGE_MODEL),
     prompt,
     // temperature 0 keeps judge scores deterministic — moves only when the AGENT does.
     temperature: 0,

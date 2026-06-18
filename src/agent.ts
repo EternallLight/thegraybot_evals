@@ -10,7 +10,7 @@
  * (a plain Evalite run), the AI SDK uses a no-op tracer and nothing is exported.
  */
 import { generateText } from "ai";
-import { moonshot, DEFAULT_MODEL, MOCK } from "./model";
+import { grok, DEFAULT_MODEL, MOCK } from "./model";
 import type { Audience } from "../evals/cases";
 import {
   TEAM_SYSTEM_PROMPT,
@@ -23,7 +23,7 @@ import {
 export interface ReplyOpts {
   /** 'team' (full persona) or 'outsider' (professional mode). Default 'team'. */
   audience?: Audience;
-  /** Override the Kimi model id — the seed uses this for its "different model" run. */
+  /** Override the Grok model id — the seed uses this for its "different model" run. */
   model?: string;
   /** Use the deliberately bland prompt. Makes the `inCharacter` judge score visibly drop. */
   weakened?: boolean;
@@ -44,7 +44,7 @@ export async function reply(
   if (MOCK) return mockReply(message, audience, weakened);
 
   const { text } = await generateText({
-    model: moonshot(model),
+    model: grok(model),
     system: buildSystemPrompt(audience, weakened),
     prompt: message,
     maxOutputTokens: 400,

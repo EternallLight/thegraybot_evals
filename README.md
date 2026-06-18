@@ -23,14 +23,14 @@ move over time — including a run where we deliberately **weaken the persona** 
 
 | Piece | Choice | Notes |
 |---|---|---|
-| Agent + judges | **Moonshot Kimi** via the Vercel AI SDK | OpenAI-compatible endpoint; one cheap model |
+| Agent + judges | **xAI Grok** via the Vercel AI SDK | OpenAI-compatible endpoint; one cheap model |
 | Eval runner | **Evalite** (UI on **http://localhost:3006**) | SQLite run-history is automatic |
 | Dashboard | **Self-hosted Langfuse** (UI on **http://localhost:3000**) | official docker-compose |
 | Language | TypeScript + Node 20+, `tsx`, `pnpm` | ESM |
 
-> **Why Kimi and not Claude/OpenAI?** A Claude Code or ChatGPT *product subscription* can't
-> power programmatic API calls — those need a pay-per-token API key. This demo uses Moonshot
-> Kimi (cheap, OpenAI-compatible). Swapping providers is a one-file change in `src/model.ts`.
+> **Why Grok and not Claude/OpenAI?** A Claude Code or ChatGPT *product subscription* can't
+> power programmatic API calls — those need a pay-per-token API key. This demo uses xAI
+> Grok (cheap, OpenAI-compatible). Swapping providers is a one-file change in `src/model.ts`.
 
 ### Pinned versions
 
@@ -45,8 +45,8 @@ Langfuse server: docker image langfuse/langfuse:3
 ### Cost
 
 Tiny. A full Langfuse seed is ~10 cases × 5 runs ≈ 50 short agent calls + ~100 short
-LLM-judge calls of a few hundred tokens each. On Kimi that's **well under $0.20 per full
-sweep** — effectively pennies. (Prices drift; check [platform.moonshot.ai](https://platform.moonshot.ai/).)
+LLM-judge calls of a few hundred tokens each. On Grok that's **well under $0.30 per full
+sweep** — effectively pennies. (Prices drift; check [x.ai/api](https://x.ai/api).)
 Or run everything **free** with no API key in **mock mode** (see below).
 
 ---
@@ -56,7 +56,7 @@ Or run everything **free** with no API key in **mock mode** (see below).
 - **Node 20+** and **pnpm** (`npm i -g pnpm`)
 - **Docker** + Docker Compose (for Act 2). The Langfuse stack is **6 containers**
   (web, worker, Postgres, ClickHouse, Redis, MinIO) — budget **~4 GB RAM**, 6–8 GB comfortable.
-- A **Moonshot API key** ([platform.moonshot.ai](https://platform.moonshot.ai/)) — *optional*
+- An **xAI API key** ([console.x.ai](https://console.x.ai/)) — *optional*
   if you only want the no-cost mock run.
 
 ---
@@ -66,7 +66,7 @@ Or run everything **free** with no API key in **mock mode** (see below).
 ```
 src/                  ← the agent under test
   persona.ts          ← Gray Cat system prompts + allowed emoji set
-  model.ts            ← Moonshot Kimi provider + mock flag
+  model.ts            ← xAI Grok provider + mock flag
   agent.ts            ← reply()  — THE AGENT UNDER TEST (shared by both tools)
 evals/                ← everything that measures / observes the agent
   cases.ts            ← the ~9 shared cases (single source of truth)
@@ -89,7 +89,7 @@ are **shared**. Evalite and Langfuse are just two lenses on the same three files
 ```bash
 pnpm install
 cp .env.example .env
-# then edit .env: put your MOONSHOT_API_KEY in (or set GRAYCAT_MOCK=1 for a no-key run)
+# then edit .env: put your XAI_API_KEY in (or set GRAYCAT_MOCK=1 for a no-key run)
 ```
 
 > **No key? Mock mode.** Set `GRAYCAT_MOCK=1` in `.env`. The whole pipeline runs with canned,
@@ -157,14 +157,14 @@ password: graycatdemo
 
 ### 2.2 — Run the agent (see a trace land)
 
-With a real `MOONSHOT_API_KEY` in `.env`:
+With a real `XAI_API_KEY` in `.env`:
 
 ```bash
 pnpm try
 ```
 
 **What you should see:** four replies printed in the terminal, and — in Langfuse →
-**Tracing → Traces** — new `graycat-reply` traces, each showing the Kimi call, the
+**Tracing → Traces** — new `graycat-reply` traces, each showing the Grok call, the
 prompt/response, token usage, and the `audience`/`model` metadata.
 
 ### 2.3 — Seed history (the main event)
@@ -237,14 +237,14 @@ docker compose down -v                    # also delete all Langfuse data volume
 
 ## Troubleshooting
 
-- **`MOONSHOT_API_KEY is not set`** — add it to `.env`, or set `GRAYCAT_MOCK=1`.
+- **`XAI_API_KEY is not set`** — add it to `.env`, or set `GRAYCAT_MOCK=1`.
 - **Langfuse web not loading** — `docker compose ps`; ClickHouse/Postgres take a bit to go
   healthy on first boot. `docker compose logs -f langfuse-web`.
 - **No trend line** — you need ≥2 runs of the same dataset (the seed does 5). Re-run
   `pnpm seed:langfuse` to add more points.
 - **Spans missing in Langfuse** — a short script must flush before exit; the seed/`try`
   scripts call `flushTelemetry()` for you. Confirm `LANGFUSE_BASE_URL` (with the underscore).
-- **Wrong Kimi model id** — confirm what's enabled on your account:
-  `curl https://api.moonshot.ai/v1/models -H "Authorization: Bearer $MOONSHOT_API_KEY"`.
+- **Wrong Grok model id** — confirm what's enabled on your account:
+  `curl https://api.x.ai/v1/models -H "Authorization: Bearer $XAI_API_KEY"`.
 
 😸 Generated with The Gray Cat

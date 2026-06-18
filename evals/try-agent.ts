@@ -1,7 +1,7 @@
 /**
  * Quick smoke test: run a few cases through the agent and print the replies.
  *
- * With the Langfuse instrumentation loaded (first import) and a real MOONSHOT_API_KEY,
+ * With the Langfuse instrumentation loaded (first import) and a real XAI_API_KEY,
  * each reply also ships a trace to Langfuse — the "run the agent, see a trace land" step.
  * (Under GRAYCAT_MOCK=1 there's no real LLM call, so no agent trace is produced — use
  * `pnpm seed:langfuse` to populate the dashboard in mock mode.)
